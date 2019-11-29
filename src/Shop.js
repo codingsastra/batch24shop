@@ -28,18 +28,61 @@ class Shop extends Component {
 
         this.state = {
             items:items,
-            cartItems:[]
+            cartItems:[],
+            orderTotal:0
         }
     }
 
     addToCart=(item)=>{
-        console.log(JSON.stringify(item));
-        this.setState({
-            cartItems:[
-                ...this.state.cartItems,
-                item
-            ]
+        console.log(item)
+
+        //if item exists alread
+        var isItemExists=this.state.cartItems.some((cartItem)=>{
+            return cartItem.id==item.id;
         })
+
+        if(!isItemExists){
+            item.qty=1;
+
+            this.setState({
+                cartItems:[
+                    ...this.state.cartItems,
+                    item
+                ]
+            },()=>{
+                this.setState({
+                    orderTotal:this.state.cartItems.reduce((total,item)=>{
+                        return total+item.price * item.qty;
+                    },0)
+                })
+            })
+        }
+        else
+        {
+            item.qty++;
+
+            this.setState({
+                cartItems:this.state.cartItems.filter((cartItem)=>{
+                    return cartItem.id!=item.id
+                })
+            },()=>{
+                this.setState({
+                    cartItems:[
+                        ...this.state.cartItems,
+                        item
+                    ]
+                },()=>{
+                    this.setState({
+                        orderTotal:this.state.cartItems.reduce((total,item)=>{
+                            return total+item.price * item.qty;
+                        },0)
+                    })
+                })
+            })
+        }
+
+        
+
     }
 
     removeFromCart=(item)=>{
@@ -47,6 +90,12 @@ class Shop extends Component {
         this.setState({
             cartItems:this.state.cartItems.filter((cartItem)=>{
                 return cartItem.id!=item.id
+            })
+        },()=>{
+            this.setState({
+                orderTotal:this.state.cartItems.reduce((total,cartItem)=>{
+                    return total+cartItem.price;
+                },0)
             })
         })
     }
@@ -60,7 +109,7 @@ class Shop extends Component {
                 </div>
                 <div className="column">
                     <Cart items={this.state.cartItems} removeFromCart={this.removeFromCart}/>
-                    <Checkout/>
+                    <Checkout orderTotal={this.state.orderTotal}/>
                 </div>
             </div>
         )
